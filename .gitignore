@@ -2,4 +2,5 @@
 # Mac files
 .DS_Store
 
-images/
+# Exclude images
+mandelbrot/images/
