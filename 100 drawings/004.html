@@ -17,7 +17,7 @@
       var fps = 24;
 
       // the canvas capturer instance
-      //var capturer = new CCapture({ format: 'png', framerate: fps });
+      var capturer = new CCapture({ format: 'png', framerate: fps });
 
       const margin = 40;
       var iter = 0;
@@ -33,7 +33,7 @@
         frameRate(fps);
 
         // start the recording
-        //capturer.start();
+        capturer.start();
       }
 
       function draw() {
@@ -44,8 +44,8 @@
         if (iter > 256) {
           noLoop();
           console.log('finished recording.');
-        //   capturer.stop();
-        //   capturer.save();
+          capturer.stop();
+          capturer.save();
           return;
         }
         //background(16);
@@ -58,7 +58,7 @@
 
         iter++;
 
-        // capturer.capture(document.getElementById('defaultCanvas0'));
+        capturer.capture(document.getElementById('defaultCanvas0'));
       }
 
       function cycle(size, cx, cy) {
