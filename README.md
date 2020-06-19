@@ -12,4 +12,7 @@ ffmpeg -r 30 -f image2 -i "%07d.png" -vf scale=1024:-2 -vcodec libx264 -crf 17 -
 
 # 500x500 @ 30 fps
 ffmpeg -r 30 -f image2 -i "%07d.png" -vf scale=500:-2 -vcodec libx264 -crf 17 -pix_fmt yuv420p output-500.mp4
+
+# No resize @ 8 fps
+ffmpeg -r 8 -f image2 -i "%07d.png" -vcodec libx264 -crf 17 -pix_fmt yuv420p output.mp4
 ```
