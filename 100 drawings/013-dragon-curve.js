@@ -26,13 +26,13 @@ function setup() {
   //const fnDraw = Lindenmayer.defaultFnDraw();
   const fnDraw = function(x1, y1, x2, y2) {
     // ICE
-    stroke(random(122, 165), 255, 255, 48);
+    // stroke(random(122, 165), 255, 255, 48);
     // FIRE
-    // stroke(random(0, 34), 255, 255, 48);
+    stroke(random(0, 34), 255, 255, 48);
 
     noFill();
-    circle(x2, y2, 1);
-    // line(x1, y1, x2, y2);
+    // circle(x2, y2, 1);
+    line(x1, y1, x2, y2);
   }
   l = new Lindenmayer(rules, fnDraw, angle, lineLength, lineScale);
   l.setAxiom('FX');
@@ -45,9 +45,9 @@ function setup() {
 
 function draw() {
   // ICE
-  background(185, 255, 16);
+  // background(185, 255, 16);
   // FIRE
-  // background(34, 255, 16);
+  background(34, 255, 0);
 
   push();
   translate(g_margin + g_drawable_area*.625, g_drawable_area * 0.35 + g_margin);
