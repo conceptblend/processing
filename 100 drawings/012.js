@@ -28,7 +28,7 @@ function setup() {
   createCanvas(canvas_size, canvas_size);
 
   background(0);
-  frameRate(16);
+  frameRate(fps);
 }
 
 function draw() {
