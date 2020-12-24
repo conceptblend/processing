@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voronoi</title>
+    <style type="text/css">
+    body {
+      font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+    </style>
+  </head>
+  <body onkeydown="VoronoiDemo.handleKeyPress(event);">
+    <canvas
+      id="voronoiCanvas"
+      width="600"
+      height="600"
+      onclick="VoronoiDemo.siteAtMouse(event);"
+      onmousemove="VoronoiDemo.handleMouseDown(event);"
+    ></canvas>
+    <p>Use the UP and DOWN arrows to explore variations. Click to add a new site.</p>
+    <script src="./rhill-voronoi-core.min.js"></script>
+    <script>
+      var VoronoiDemo = {
+        voronoi: new Voronoi(),
+        sites: [],
+        wanderer: { x: 0, y: 0, heading: 0, },
+        diagram: null,
+        margin: 0.05,
+        canvas: null,
+        bbox: { xl: 0, xr: 600, yt: 0, yb: 600 },
+        lastCell: undefined,
+        treemap: null,
+        /**
+         * 14
+         * 22
+         * 23
+         * 41
+         **/
+        angleDelta: 15,
+        siteCount: 256, // 148
+
+        init: function () {
+          this.canvas = document.getElementById('voronoiCanvas');
+          // this.randomSites(100, true);
+          // this.orderedSites(2, true);
+          this.spiralSites(this.siteCount, true);
+          // this.render();
+          this.renderCells();
+        },
+
+        clearSites: function () {
+          this.sites = [];
+          this.treemap = null;
+          this.diagram = this.voronoi.compute(this.sites, this.bbox);
+        },
+
+        randomSites: function (n, clear) {
+          if (clear) {
+            this.sites = [];
+          }
+          // create vertices
+          var xmargin = this.canvas.width * this.margin,
+            ymargin = this.canvas.height * this.margin,
+            xo = xmargin,
+            dx = this.canvas.width - xmargin * 2,
+            yo = ymargin,
+            dy = this.canvas.height - ymargin * 2;
+          for (var i = 0; i < n; i++) {
+            this.sites.push({
+              x: self.Math.round((xo + self.Math.random() * dx) * 10) / 10,
+              y: self.Math.round((yo + self.Math.random() * dy) * 10) / 10,
+            });
+          }
+          this.treemap = null;
+          this.diagram = this.voronoi.compute(this.sites, this.bbox);
+        },
+
+        orderedSites: function (n, clear) {
+          if (clear) {
+            this.sites = [];
+          }
+          // create vertices
+          var xmargin = this.canvas.width * this.margin,
+            ymargin = this.canvas.height * this.margin,
+            dx = this.canvas.width - xmargin * 2,
+            dy = this.canvas.height - ymargin * 2,
+            yn = Math.floor(dy / n),
+            xn = Math.floor(dx / n),
+            halfXn = xn / 2,
+            halfYn = yn / 2;
+
+          for (var _y = 0; _y < n; _y++) {
+            for (var _x = 0; _x < n; _x++) {
+              this.sites.push({
+                x: Math.round(xmargin + (halfXn/2) + xn * _x + (Math.random() * halfXn - halfXn/2)),
+                y: Math.round(ymargin + (halfYn/2) + yn * _y + (Math.random() * halfYn - halfYn/2)),
+              });
+            }
+          }
+          this.treemap = null;
+          this.diagram = this.voronoi.compute(this.sites, this.bbox);
+        },
+
+        spiralSites: function (n, clear) {
+          if (clear) {
+            this.sites = [];
+          }
+          // create vertices
+          var xmargin = this.canvas.width * this.margin,
+            ymargin = this.canvas.height * this.margin,
+            dx = this.canvas.width - xmargin * 2,
+            dy = this.canvas.height - ymargin * 2,
+            radx = dx / 2,
+            rady = dy / 2,
+            steps = n,
+            angle = 0,
+            cx = xmargin + radx,
+            cy = ymargin + rady,
+            outer = steps;
+
+            this.wanderer.x = cx;
+            this.wanderer.y = cy;
+
+            while (steps--) {
+              this.sites.push({
+                x: cx + (radx * steps/outer) * Math.cos(angle),
+                y: cy + (rady * steps/outer) * Math.sin(angle),
+              });
+              angle += this.angleDelta;
+            }
+          this.treemap = null;
+          this.diagram = this.voronoi.compute(this.sites, this.bbox);
+        },
+
+        handleKeyPress: function (ev) {
+          switch (ev.key) {
+            case "ArrowUp":
+              this.angleDelta++;
+              console.log(this.angleDelta);
+              this.spiralSites(this.siteCount, true);
+              this.recompute();
+              this.renderCells();
+              break;
+            case "ArrowDown":
+              this.angleDelta--;
+              console.log(this.angleDelta);
+              this.spiralSites(this.siteCount, true);
+              this.recompute();
+              this.renderCells();
+              break;
+            case " ":
+                window.requestAnimationFrame(this.wander.bind(this));
+                break;
+            default:
+              break;
+          }
+        },
+
+        handleMouseDown: function (ev) {
+          this.sites.pop(); // and discard
+          if (!this.diagram) {
+            return;
+          }
+          var canvas = document.getElementById('voronoiCanvas');
+          if (!canvas) {
+            return;
+          }
+          // >>> http://www.quirksmode.org/js/events_properties.html#position
+          var x = 0,
+            y = 0;
+          if (!ev) {
+            ev = window.event;
+          }
+          if (ev.pageX || ev.pageY) {
+            x = ev.pageX;
+            y = ev.pageY;
+          } else if (e.clientX || e.clientY) {
+            x =
+              ev.clientX +
+              document.body.scrollLeft +
+              document.documentElement.scrollLeft;
+            y =
+              ev.clientY +
+              document.body.scrollTop +
+              document.documentElement.scrollTop;
+          }
+          // <<< http://www.quirksmode.org/js/events_properties.html#position
+          x -= canvas.offsetLeft;
+          y -= canvas.offsetTop;
+
+          this.sites.push(
+            {
+              x,
+              y,
+            }
+          );
+          this.recompute();
+          this.renderCells();
+        },
+
+        wander: function () {
+          let stepSize = 12,
+            halfStep = stepSize / 2;
+          let headingJitter = 4;
+          this.sites.pop(); // and discard
+          this.wanderer.heading += Math.random() * headingJitter - headingJitter/2;
+          this.wanderer.x += Math.cos(this.wanderer.heading) * stepSize,
+          this.wanderer.y += Math.sin(this.wanderer.heading) * stepSize,
+
+          this.sites.push({
+            x: this.wanderer.x,
+            y: this.wanderer.y,
+          });
+          this.recompute();
+          this.renderCells();
+        },
+
+        recompute: function () {
+          this.treemap = null;
+          this.voronoi.recycle(this.diagram);
+          this.diagram = this.voronoi.compute(this.sites, this.bbox);
+        },
+
+        buildTreemap: function () {
+          return;
+          var treemap = new QuadTree({
+            x: this.bbox.xl,
+            y: this.bbox.yt,
+            width: this.bbox.xr - this.bbox.xl,
+            height: this.bbox.yb - this.bbox.yt,
+          });
+          var cells = this.diagram.cells,
+            iCell = cells.length;
+          while (iCell--) {
+            bbox = cells[iCell].getBbox();
+            bbox.cellid = iCell;
+            treemap.insert(bbox);
+          }
+          return treemap;
+        },
+
+        cellUnderMouse: function (ev) {
+          return;
+
+          if (!this.diagram) {
+            return;
+          }
+          var canvas = document.getElementById('voronoiCanvas');
+          if (!canvas) {
+            return;
+          }
+          // >>> http://www.quirksmode.org/js/events_properties.html#position
+          var x = 0,
+            y = 0;
+          if (!ev) {
+            ev = window.event;
+          }
+          if (ev.pageX || ev.pageY) {
+            x = ev.pageX;
+            y = ev.pageY;
+          } else if (e.clientX || e.clientY) {
+            x =
+              ev.clientX +
+              document.body.scrollLeft +
+              document.documentElement.scrollLeft;
+            y =
+              ev.clientY +
+              document.body.scrollTop +
+              document.documentElement.scrollTop;
+          }
+          // <<< http://www.quirksmode.org/js/events_properties.html#position
+          x -= canvas.offsetLeft;
+          y -= canvas.offsetTop;
+          cellid = 0; //this.cellIdFromPoint(x, y);
+          if (this.lastCell !== cellid) {
+            if (this.lastCell !== undefined) {
+              this.renderCell(this.lastCell, '#fff', '#000');
+            }
+            if (cellid !== undefined) {
+              this.renderCell(cellid, '#f00', '#00f');
+            }
+            this.lastCell = cellid;
+          }
+          document.getElementById('voronoiCellid').innerHTML =
+            '(' + x + ',' + y + ') = ' + cellid;
+        },
+
+        cellIdFromPoint: function (x, y) {
+          // We build the treemap on-demand
+          if (this.treemap === null) {
+            this.treemap = this.buildTreemap();
+          }
+          // Get the Voronoi cells from the tree map given x,y
+          var items = this.treemap.retrieve({ x: x, y: y }),
+            iItem = items.length,
+            cells = this.diagram.cells,
+            cell,
+            cellid;
+          while (iItem--) {
+            cellid = items[iItem].cellid;
+            cell = cells[cellid];
+            if (cell.pointIntersection(x, y) > 0) {
+              return cellid;
+            }
+          }
+          return undefined;
+        },
+        
+        siteAtMouse: function (ev) {
+          if (!this.diagram) {
+            return;
+          }
+          var canvas = document.getElementById('voronoiCanvas');
+          if (!canvas) {
+            return;
+          }
+          // >>> http://www.quirksmode.org/js/events_properties.html#position
+          var x = 0,
+            y = 0;
+          if (!ev) {
+            ev = window.event;
+          }
+          if (ev.pageX || ev.pageY) {
+            x = ev.pageX;
+            y = ev.pageY;
+          } else if (e.clientX || e.clientY) {
+            x =
+              ev.clientX +
+              document.body.scrollLeft +
+              document.documentElement.scrollLeft;
+            y =
+              ev.clientY +
+              document.body.scrollTop +
+              document.documentElement.scrollTop;
+          }
+          // <<< http://www.quirksmode.org/js/events_properties.html#position
+          x -= canvas.offsetLeft;
+          y -= canvas.offsetTop;
+
+          this.sites.push(
+            {
+              x,
+              y,
+            }
+          );
+          this.recompute();
+          this.renderCells();
+        },
+
+        renderCell: function (id, fillStyle, strokeStyle) {
+          if (id === undefined) {
+            return;
+          }
+          if (!this.diagram) {
+            return;
+          }
+          var cell = this.diagram.cells[id];
+          if (!cell) {
+            return;
+          }
+          var ctx = this.canvas.getContext('2d');
+          ctx.globalAlpha = 1;
+          // edges
+          ctx.beginPath();
+          var halfedges = cell.halfedges,
+            nHalfedges = halfedges.length,
+            v = halfedges[0].getStartpoint();
+          ctx.moveTo(v.x, v.y);
+          for (var iHalfedge = 0; iHalfedge < nHalfedges; iHalfedge++) {
+            v = halfedges[iHalfedge].getEndpoint();
+            ctx.lineTo(v.x, v.y);
+          }
+          ctx.fillStyle = fillStyle;
+          ctx.strokeStyle = strokeStyle;
+          ctx.lineJoin = "round";
+          ctx.lineWidth = .5;
+          ctx.fill();
+          ctx.stroke();
+          // site
+          // v = cell.site;
+          // ctx.fillStyle = '#fff';
+          // ctx.beginPath();
+          // ctx.rect(v.x - 2 / 3, v.y - 2 / 3, 2, 2);
+          // ctx.fill();
+        },
+
+        render: function () {
+          var ctx = this.canvas.getContext('2d');
+          // background
+          ctx.globalAlpha = 1;
+          ctx.beginPath();
+          ctx.rect(0, 0, this.canvas.width, this.canvas.height);
+          ctx.fillStyle = 'white';
+          ctx.fill();
+          // ctx.strokeStyle = '#888';
+          // ctx.stroke();
+          // voronoi
+          if (!this.diagram) {
+            return;
+          }
+          // edges
+          ctx.beginPath();
+          ctx.strokeStyle = '#000';
+        
+          var edges = this.diagram.edges,
+            iEdge = edges.length,
+            edge,
+            v;
+          while (iEdge--) {
+            edge = edges[iEdge];
+            v = edge.va;
+            ctx.moveTo(v.x, v.y);
+            v = edge.vb;
+            ctx.lineTo(v.x, v.y);
+          }
+          ctx.stroke();
+          // sites
+          // ctx.beginPath();
+          // ctx.fillStyle = '#44f';
+          // var sites = this.sites,
+          //   iSite = sites.length;
+          // while (iSite--) {
+          //   v = sites[iSite];
+          //   ctx.rect(v.x - 2 / 3, v.y - 2 / 3, 2, 2);
+          // }
+          // ctx.fill();
+        },
+        
+        renderCells: function() {
+          var ctx = this.canvas.getContext('2d');
+          // background
+          ctx.globalAlpha = 1;
+          ctx.beginPath();
+          ctx.rect(0, 0, this.canvas.width, this.canvas.height);
+          ctx.fillStyle = 'white';
+          ctx.fill();
+
+          // voronoi
+          if (!this.diagram) {
+            return;
+          }
+          let iCells = this.diagram.cells.length;
+          while (iCells--) {
+            // this.renderCell(iCells, `#fff`, `rgba(0, 0, 0, 1)`);
+            // this.renderCell(iCells, `rgb(${iCells % 255}, 77, 177)`, "rgba(255, 255, 255)");
+            this.renderCell(iCells, `#fff`, `rgb(${iCells % 255}, 77, 177)`);
+          }
+        },
+      };
+      VoronoiDemo.init();
+    </script>
+  </body>
+</html>
