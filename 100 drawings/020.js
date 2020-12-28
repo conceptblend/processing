@@ -8,8 +8,9 @@ const g_canvas_size = g_drawable_area + 2 * g_margin;
 const fps = 24;
 const g_scale = 1;
 
-const inc = 0.1;
-const scale = 40;
+const numParticles = 5000;
+const inc = 0.05;
+const scale = 5;
 
 var zOff = 0;
 var rows, cols;
@@ -27,21 +28,22 @@ function setup() {
   // pixelDensity(1);
 
   createCanvas(g_canvas_size, g_canvas_size);
-  background(255);
+  background(color(201/360*100, 91, 82));
 
   rows = Math.floor(height / scale);
   cols = Math.floor(width / scale);
 
-  particles = new Array(1000);
+  particles = new Array(numParticles);
   flowfield = new Array(rows * cols);
   for (var n=0, len=particles.length; n<len; n++) {
     particles[n] = new Particle();
   }
-  background(100);
+  
   fr = createP('');
   
   frameRate(fps);
   // noLoop();
+  
 }
 
 function draw() {
@@ -52,19 +54,20 @@ function draw() {
   // }
   ////// BEGIN DRAW
   // background(100, 5);
-
+  let index = 0;
   let yOff = 0;
-  for (var y=0, h=rows; y < h; y++) {
+  for (var y=0; y < rows; y++) {
     
     let xOff = 0;
-    for (var x=0, w=cols; x < w; x++) {
+    for (var x=0; x < cols; x++) {
       
       let c = noise(xOff, yOff, zOff);
       let v = p5.Vector.fromAngle(PI + c * TWO_PI);
       // v.setMag(5);
-      flowfield[x + y * cols] = v;
+      // flowfield[x + y * cols] = v;
+      flowfield[index++] = v;
 
-      // strokeWeight(2);
+      // strokeWeight(1);
       // stroke(color(c * 100, 80, 60, 5));
 
       // push();
@@ -106,4 +109,12 @@ function draw() {
   //     capturer.save();
   //   }
   // }
+}
+
+function keyPressed() {
+  if (key == 'p' || key == ' ') {
+    noLoop();
+  } else if (key == 's') {
+    loop();
+  }
 }
