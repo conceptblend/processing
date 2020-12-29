@@ -4,11 +4,12 @@ class Particle {
         this.prev = this.pos.copy();
         this.velocity = createVector(0,0);
         this.acceleration = createVector(0,0);
+        this.size = 10+random(48);
     }
 
     update() {
         this.velocity.add(this.acceleration);
-        this.velocity.limit(2);
+        this.velocity.limit(4);
         this.pos.add(this.velocity);
         this.acceleration.mult(0);
     }
@@ -18,13 +19,19 @@ class Particle {
     }
     
     show() {
-        // stroke(0, 5);
-        // strokeWeight(0.5);
+        stroke(100, 40);
+        strokeWeight(4);
         // line(this.pos.x, this.pos.y, this.prev.x, this.prev.y);
-        noStroke();
-        // fill(color(201/360*100, 91, 82, 5)); // Light blue
-        fill(100, 2); // white
-        ellipse(this.pos.x, this.pos.y, 2);
+        push();
+        translate(this.pos.x, this.pos.y);
+        rotate(this.velocity.heading()+90);
+        line(0, 0, this.size, 0);
+        pop();
+        
+
+        // noStroke();
+        // fill(100, 20); // white
+        // ellipse(this.pos.x, this.pos.y, this.size);
         // this.updatePrevious();
     }
     
