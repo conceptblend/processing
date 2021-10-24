@@ -141,6 +141,7 @@ function draw() {
     }
   }
 
+
   fr.html(Math.floor(frameRate()));
   lblKnob.html(knob1.value());
   ////// END DRAW

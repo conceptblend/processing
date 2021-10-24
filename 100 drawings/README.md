@@ -12,12 +12,7 @@ ffmpeg -r 30 -f image2 -i "%07d.png" -vf scale=500:-2 -vcodec libx264 -crf 17 -p
 
 # No resize @ 8 fps
 ffmpeg -r 8 -f image2 -i "%07d.png" -vcodec libx264 -crf 17 -pix_fmt yuv420p output.mp4
-```
 
-ffmpeg -r 24 -f image2 -i "%07d.png" -vf scale=1024:-2 -vcodec libx264 -crf 17 -pix_fmt yuv420p output-1024.mp4
-ffmpeg -r 24 -f image2 -i "%07d.png" -vcodec libx264 -crf 17 -pix_fmt yuv420p output.mp4
-
-```shell
 # Grab every 10th frame and scale up to 1080px
 # -> output_fast.mp4
 ffmpeg -r 24 -f image2 -i "%07d.png" -vcodec libx264 -crf 17 -pix_fmt yuv420p -filter:v "setpts=0.1*PTS,scale=1080:-2" output_fast.mp4

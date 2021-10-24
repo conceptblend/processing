@@ -178,6 +178,13 @@ function draw() {
     index++; // account for the skipped column
   }
 
+
+  drawingContext.globalCompositeOperation = 'destination-in';
+  fill(0,99,88,100);
+  noStroke();
+  circle(width/2, height/2, width*.98);
+  drawingContext.globalCompositeOperation = 'source-over';
+
   fr.html(Math.floor(frameRate()));
   lblKnob.html(knob1.value());
   ////// END DRAW
